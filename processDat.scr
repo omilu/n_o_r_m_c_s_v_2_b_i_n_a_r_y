@@ -1,0 +1,65 @@
+#!/usr/bin/bash
+#only works on csv files
+#get the csv file from test grafix
+#test grafix converts the plf into an *A.dat and *B.dat
+#this script converts these files into *normA.dat *normB.dat
+#and *fire.dat
+#need to create another routing to automate the generation of hte
+#data from the plf as well so I can automate the whole fucking tool
+#chain
+
+cropped_rows=840
+cropped_cols=840
+
+gcc fire_detect.c -o fire_detect.exe
+ls -lah|sed '/^d/d' |
+	awk '{print $10}' |
+	grep *A.dat |
+	sed 's/.plf_chnA.dat//g' >test.tmp
+	
+
+exec 6<test.tmp
+
+while read -u 6;
+do
+	echo processing norm "$REPLY"A.dat;
+#	./normcsv2binary.exe *A.dat "$REPLY"Anormfrak.dat>testa.tmp
+	echo processing norm "$REPLY"B.dat;
+#	./normcsv2binary.exe *B.dat "$REPLY"Bnormfrak.dat>testb.tmp
+	echo processing  "$REPLY"A.dat;
+#	./csv2binary.exe *A.dat "$REPLY"Arawfrak.dat
+	echo processing  "$REPLY"B.dat;
+#	./csv2binary.exe *B.dat "$REPLY"Brawfrak.dat
+	echo fire detecting;
+#	./fire_detect.exe *Arawfrak.dat *Brawfrak.dat "$REPLY"firefrak.dat
+
+	
+done
+
+#./normcsv2binary.exe *A.dat 
+cat test.tmp
+cols="$(cat testa.tmp|grep cols|awk '{print $3}')"
+rows="$(cat testa.tmp|grep rows|awk '{print $3}')"
+maxa="$(cat testa.tmp|grep max|awk '{print $3}')"
+mina="$(cat testa.tmp|grep min|awk '{print $3}')"
+maxb="$(cat testb.tmp|grep max|awk '{print $3}')"
+minb="$(cat testb.tmp|grep min|awk '{print $3}')"
+echo 
+echo "the variables i stored are"
+echo "maxa " $maxa
+echo "mina " $mina
+echo "maxb " $maxb
+echo "minb " $minb
+echo "cols " $cols
+echo "rows " $rows
+
+rm -r cropped
+mkdir cropped
+
+convert -endian LSB -depth 16 -size "$cols"x"$rows" gray:*Anormfrak.dat -crop "$cropped_cols"x"$cropped_rows" gray:cropped/fucked%dA.dat
+convert -endian LSB -depth 16 -size "$cols"x"$rows" gray:*Bnormfrak.dat -crop "$cropped_cols"x"$cropped_rows" gray:cropped/fucked%dB.dat
+convert -endian LSB -depth 16 -size "$cols"x"$rows" gray:*firefrak.dat -crop "$cropped_cols"x"$cropped_rows" gray:cropped/fucked%dFire.dat
+#convert -depth 16 -endian LSB -size 840x840 gray:fucked0A.dat -normalize png:-|display
+
+#shit=$(expr 2 + 2 )
+
